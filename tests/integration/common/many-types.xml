@@ -286,6 +286,8 @@
         <arg type="b"   name="out_Param16"></arg>
     </signal>
 
+    <signal name="TestSignalNoArg"></signal>
+
     <!-- Properties -->
 
     <property name="TestPropReadByteStringArray"        type="aay" access="read" />

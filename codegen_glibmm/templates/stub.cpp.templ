@@ -179,11 +179,13 @@ bool {{ class_name_with_namespace }}::on_interface_set_property(
 
 {% for signal in interface.signals if signal is supported_by_sigc %}
 void {{ class_name_with_namespace }}::{{ signal.name }}_emitter(
-    const std::vector<Glib::ustring> &destination_bus_names,
+    const std::vector<Glib::ustring> &destination_bus_names
+    {%- if signal.args|list|count > 0 -%},
 {%- set comma = joiner() -%}
 {%- for arg in signal.args -%}
 {{ comma() }}{{ arg.cpptype_in }} {{ arg.name }}
-{%- endfor -%})
+{%- endfor -%}
+    {%- endif -%})
 {
     std::vector<Glib::VariantBase> paramsList;
 

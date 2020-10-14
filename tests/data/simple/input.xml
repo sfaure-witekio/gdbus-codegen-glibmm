@@ -21,6 +21,11 @@
       <arg type="a{sv}" name="Param4" direction="out"></arg>
     </method>
 
+    <method name="TestCallNoArgs">
+    </method>
+
+    <method name="TestCallNoArgsCollapsed"/>
+
     <signal name="TestSignalObjectPathArray">
         <arg type="ao" name="Param1"></arg>
     </signal>
