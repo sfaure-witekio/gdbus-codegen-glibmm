@@ -29,6 +29,8 @@ from . import dbustypes
 from . import parser
 from . import codegen
 from . import version
+from pathlib import Path
+
 
 def find_arg(arg_list, arg_name):
     for a in arg_list:
@@ -36,11 +38,13 @@ def find_arg(arg_list, arg_name):
             return a
     return None
 
+
 def find_method(iface, method):
     for m in iface.methods:
         if m.name == method:
             return m
     return None
+
 
 def find_signal(iface, signal):
     for m in iface.signals:
@@ -48,24 +52,28 @@ def find_signal(iface, signal):
             return m
     return None
 
+
 def find_prop(iface, prop):
     for m in iface.properties:
         if m.name == prop:
             return m
     return None
 
+
 def codegen_main():
     arg_parser = optparse.OptionParser('%prog [options]', version=version)
     arg_parser.add_option('', '--interface-prefix', metavar='PREFIX', default='',
-                            help='String to strip from D-Bus interface names for code and docs')
+                          help='String to strip from D-Bus interface names for code and docs')
     arg_parser.add_option('', '--cpp-namespace', metavar='NAMESPACE', default='',
-                            help='The namespace to use for generated C++ code')
+                          help='The namespace to use for generated C++ code')
     arg_parser.add_option('', '--errors-namespace', metavar='ERROR_NAMESPACE', default='',
                           help='The namespace to use for the Error classes')
     arg_parser.add_option('', '--generate-cpp-code', metavar='OUTFILES',
                           help='Generate C++ code in OUTFILES.[cpp|h]')
-    (opts, args) = arg_parser.parse_args()
+    arg_parser.add_option('', '--output-to-folders', action="store_true", default=False,
+                          help='Separate the output files in their respective directories')
 
+    (opts, args) = arg_parser.parse_args()
 
     all_ifaces = []
     node_xmls = []
@@ -88,21 +96,31 @@ def codegen_main():
         i.post_process(interface_prefix_list, opts.cpp_namespace, opts.errors_namespace)
 
     cpp_code = opts.generate_cpp_code
+    use_folders = opts.output_to_folders
 
     if cpp_code:
-        proxy_h = open(cpp_code + "_proxy" + '.h', 'w')
-        proxy_cpp = open(cpp_code + "_proxy" + '.cpp', 'w')
-        stub_h = open(cpp_code + "_stub" + '.h', 'w')
-        stub_cpp = open(cpp_code + "_stub" + '.cpp', 'w')
-        common_h = open(cpp_code + "_common" + '.h', 'w')
-        common_cpp = open(cpp_code + "_common" + '.cpp', 'w')
+        proxy_folder = "proxy/" if use_folders else ""
+        stub_folder = "stub/" if use_folders else ""
+        common_folder = "common/" if use_folders else ""
+
+        Path(proxy_folder).mkdir(parents=True, exist_ok=True)
+        Path(stub_folder).mkdir(parents=True, exist_ok=True)
+        Path(common_folder).mkdir(parents=True, exist_ok=True)
+
+        proxy_h = open(proxy_folder + cpp_code + "_proxy" + '.h', 'w')
+        proxy_cpp = open(proxy_folder + cpp_code + "_proxy" + '.cpp', 'w')
+        stub_h = open(stub_folder + cpp_code + "_stub" + '.h', 'w')
+        stub_cpp = open(stub_folder + cpp_code + "_stub" + '.cpp', 'w')
+        common_h = open(common_folder + cpp_code + "_common" + '.h', 'w')
+        common_cpp = open(common_folder + cpp_code + "_common" + '.cpp', 'w')
+
         gen = codegen.CodeGenerator(all_ifaces,
                                     opts.cpp_namespace,
                                     interface_prefix_list,
                                     node_xmls,
                                     proxy_h, proxy_cpp,
                                     stub_cpp, stub_h,
-                                    common_cpp, common_h);
+                                    common_cpp, common_h)
         ret = gen.generate()
         proxy_h.close()
         proxy_cpp.close()
@@ -110,6 +128,7 @@ def codegen_main():
         stub_cpp.close()
 
     sys.exit(0)
+
 
 if __name__ == "__main__":
     codegen_main()
