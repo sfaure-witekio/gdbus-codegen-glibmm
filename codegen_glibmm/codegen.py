@@ -36,8 +36,13 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 SIGNAL_MAX_PARAM = 10
 
+
 class CodeGenerator:
-    def __init__(self, ifaces, namespace, interface_prefix, node_xmls, proxy_h, proxy_cpp, stub_cpp, stub_h, common_cpp, common_h):
+    def __init__(self, ifaces, namespace, interface_prefix, node_xmls, proxy_h, proxy_cpp, stub_cpp, stub_h, common_cpp,
+                 common_h):
+        self.j2_env = Environment(loader=FileSystemLoader(THIS_DIR + "/templates/"),
+                                  trim_blocks=True,
+                                  lstrip_blocks=True)
         self.ifaces = ifaces
         self.proxy_h = proxy_h
         self.proxy_cpp = proxy_cpp
@@ -47,51 +52,53 @@ class CodeGenerator:
         self.common_cpp = common_cpp
         self.node_xmls = node_xmls
 
-    def emit (self, dest, text, newline = True):
+    def emit(self, dest, text, newline=True):
         """ Emit code to the specified file
             @param newline boolean indicating whether to append a newline to
                            generated code
+           @param dest: file to write to
+           @param text: text to write in file
         """
-        dest.write (text)
+        dest.write(text)
         if newline:
-            dest.write ("\n")
+            dest.write("\n")
 
-    def emit_h_p (self, text, newline = True):
+    def emit_h_p(self, text, newline=True):
         """ Emit code to proxy header file
             @param newline boolean indicating whether to append a newline to
                            generated code
         """
         self.emit(self.proxy_h, text, newline)
 
-    def emit_cpp_p (self, text, newline = True):
+    def emit_cpp_p(self, text, newline=True):
         """ Emit code to proxy cpp file
             @param newline boolean indicating whether to append a newline to
                            generated code
         """
         self.emit(self.proxy_cpp, text, newline)
 
-    def emit_h_s (self, text, newline = True):
+    def emit_h_s(self, text, newline=True):
         """ Emit code to stub header file
             @param newline boolean indicating whether to append a newline to
                            generated code
         """
         self.emit(self.stub_h, text, newline)
 
-    def emit_cpp_s (self, text, newline = True):
+    def emit_cpp_s(self, text, newline=True):
         """ Emit code to stub cpp file
             @param newline boolean indicating whether to append a newline to
                            generated code
         """
         self.emit(self.stub_cpp, text, newline)
 
-    def emit_h_common (self, text, newline = True):
+    def emit_h_common(self, text, newline=True):
         """ Emit code to common header file
             @param newline boolean indicating whether to append a newline to
                            generated code
         """
         self.emit(self.common_h, text, newline)
 
-    def emit_cpp_common (self, text, newline = True):
+    def emit_cpp_common(self, text, newline=True):
         """ Emit code to common cpp file
             @param newline boolean indicating whether to append a newline to
                            generated code
@@ -104,17 +111,17 @@ class CodeGenerator:
         corresponding cpp file
         """
         h = self.j2_env.get_template('proxy.h.templ').render(
-                interfaces=self.ifaces,
-                common_h_name=self.common_h.name)
+            interfaces=self.ifaces,
+            common_h_name=os.path.basename(self.common_h.name))
         self.emit_h_p(h)
 
     def generate_proxy_impl(self):
         """ Generate implementation code for the proxy objects.
         """
         h = self.j2_env.get_template('proxy.cpp.templ').render(
-                interfaces=self.ifaces,
-                program_version=config.VERSION,
-                proxy_h_name=self.proxy_h.name)
+            interfaces=self.ifaces,
+            program_version=config.VERSION,
+            proxy_h_name=os.path.basename(self.proxy_h.name))
         self.emit_cpp_p(h)
 
     def generate_stub_header(self):
@@ -123,46 +130,45 @@ class CodeGenerator:
         the header file for the stub.
         """
         h = self.j2_env.get_template('stub.h.templ').render(
-                interfaces=self.ifaces,
-                common_h_name=self.common_h.name)
+            interfaces=self.ifaces,
+            common_h_name=os.path.basename(self.common_h.name))
         self.emit_h_s(h)
 
     def generate_stub_impl(self):
         """ Generate implementation code for the stub objects.
         """
         h = self.j2_env.get_template('stub.cpp.templ').render(
-                interfaces=self.ifaces,
-                node_xmls=self.node_xmls,
-                program_version=config.VERSION,
-                stub_h_name=self.stub_h.name)
+            interfaces=self.ifaces,
+            node_xmls=self.node_xmls,
+            program_version=config.VERSION,
+            stub_h_name=os.path.basename(self.stub_h.name))
         self.emit_cpp_s(h)
 
     def generate_common_header(self):
         h = self.j2_env.get_template('common.h.templ').render(
-                interfaces=self.ifaces)
+            interfaces=self.ifaces)
         self.emit_h_common(h)
 
     def generate_common_impl(self):
         h = self.j2_env.get_template('common.cpp.templ').render(
-                interfaces=self.ifaces,
-                common_h_name=self.common_h.name)
+            interfaces=self.ifaces,
+            common_h_name=os.path.basename(self.common_h.name))
         self.emit_cpp_common(h)
 
     def initialize_jinja(self):
-        self.j2_env = Environment(loader=FileSystemLoader(THIS_DIR + "/templates/"),
-                                  trim_blocks=True,
-                                  lstrip_blocks=True)
-
         def is_supported_by_sigc(signal):
             return len(signal.args) <= SIGNAL_MAX_PARAM
+
         self.j2_env.tests['supported_by_sigc'] = is_supported_by_sigc
 
         def to_utf8(value):
             return value.decode('utf-8')
+
         self.j2_env.filters['to_utf8'] = to_utf8
 
         def indent(value, levels):
             return value.replace('\n', '\n' + '    ' * levels)
+
         self.j2_env.filters['indent'] = indent
 
     def generate(self):

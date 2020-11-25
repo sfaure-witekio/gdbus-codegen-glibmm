@@ -95,10 +95,10 @@ def codegen_main():
     for i in all_ifaces:
         i.post_process(interface_prefix_list, opts.cpp_namespace, opts.errors_namespace)
 
-    cpp_code = opts.generate_cpp_code
+    file_prefix = opts.generate_cpp_code
     use_folders = opts.output_to_folders
 
-    if cpp_code:
+    if file_prefix:
         proxy_folder = "proxy/" if use_folders else ""
         stub_folder = "stub/" if use_folders else ""
         common_folder = "common/" if use_folders else ""
@@ -107,12 +107,12 @@ def codegen_main():
         Path(stub_folder).mkdir(parents=True, exist_ok=True)
         Path(common_folder).mkdir(parents=True, exist_ok=True)
 
-        proxy_h = open(proxy_folder + cpp_code + "_proxy" + '.h', 'w')
-        proxy_cpp = open(proxy_folder + cpp_code + "_proxy" + '.cpp', 'w')
-        stub_h = open(stub_folder + cpp_code + "_stub" + '.h', 'w')
-        stub_cpp = open(stub_folder + cpp_code + "_stub" + '.cpp', 'w')
-        common_h = open(common_folder + cpp_code + "_common" + '.h', 'w')
-        common_cpp = open(common_folder + cpp_code + "_common" + '.cpp', 'w')
+        proxy_h = open(proxy_folder + file_prefix + "_proxy" + '.h', 'w')
+        proxy_cpp = open(proxy_folder + file_prefix + "_proxy" + '.cpp', 'w')
+        stub_h = open(stub_folder + file_prefix + "_stub" + '.h', 'w')
+        stub_cpp = open(stub_folder + file_prefix + "_stub" + '.cpp', 'w')
+        common_h = open(common_folder + file_prefix + "_common" + '.h', 'w')
+        common_cpp = open(common_folder + file_prefix + "_common" + '.cpp', 'w')
 
         gen = codegen.CodeGenerator(all_ifaces,
                                     opts.cpp_namespace,
